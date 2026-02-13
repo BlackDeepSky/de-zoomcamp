@@ -1,0 +1,56 @@
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+*.env
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (если не учебные примеры <100 КБ)
+*.parquet
+*.avro
+*.orc
+*.feather
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+*.db
+*.sqlite
+data/
+*.csv  # ← ОСТОРОЖНО: для учебных CSV оставьте, для реальных данных — игнорируйте
+
+# Docker
+docker-compose.override.yml
+*.dockerignore
+.dockerenv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+EOF
