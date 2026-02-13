@@ -33,6 +33,9 @@ var/
 *.avro
 *.orc
 *.feather
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
 *.db
 *.sqlite
 data/
