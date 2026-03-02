@@ -54,3 +54,7 @@ Thumbs.db
 *.log
 logs/
 EOF
+.bruin.yml
+logs/runs
+logs/*.log
+logs/queries
