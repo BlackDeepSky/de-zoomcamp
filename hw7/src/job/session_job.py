@@ -1,0 +1,76 @@
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.table import EnvironmentSettings, StreamTableEnvironment
+
+
+def create_green_trips_source(t_env):
+    t_env.execute_sql("""
+        CREATE TABLE green_trips (
+            lpep_pickup_datetime VARCHAR,
+            lpep_dropoff_datetime VARCHAR,
+            PULocationID INTEGER,
+            DOLocationID INTEGER,
+            passenger_count DOUBLE,
+            trip_distance DOUBLE,
+            tip_amount DOUBLE,
+            total_amount DOUBLE,
+            event_timestamp AS TO_TIMESTAMP(lpep_pickup_datetime, 'yyyy-MM-dd HH:mm:ss'),
+            WATERMARK FOR event_timestamp AS event_timestamp - INTERVAL '5' SECOND
+        ) WITH (
+            'connector' = 'kafka',
+            'properties.bootstrap.servers' = 'redpanda:29092',
+            'topic' = 'green-trips',
+            'scan.startup.mode' = 'earliest-offset',
+            'properties.auto.offset.reset' = 'earliest',
+            'format' = 'json'
+        )
+    """)
+    return 'green_trips'
+
+
+def create_sink(t_env):
+    t_env.execute_sql("""
+        CREATE TABLE green_trips_sessions (
+            window_start TIMESTAMP(3),
+            window_end TIMESTAMP(3),
+            PULocationID INT,
+            num_trips BIGINT,
+            PRIMARY KEY (window_start, window_end, PULocationID) NOT ENFORCED
+        ) WITH (
+            'connector' = 'jdbc',
+            'url' = 'jdbc:postgresql://postgres:5432/postgres',
+            'table-name' = 'green_trips_sessions',
+            'username' = 'postgres',
+            'password' = 'postgres',
+            'driver' = 'org.postgresql.Driver'
+        )
+    """)
+    return 'green_trips_sessions'
+
+
+def run():
+    env = StreamExecutionEnvironment.get_execution_environment()
+    # No checkpointing - not needed for homework
+    env.set_parallelism(1)
+
+    settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
+    t_env = StreamTableEnvironment.create(env, environment_settings=settings)
+
+    source = create_green_trips_source(t_env)
+    sink = create_sink(t_env)
+
+    t_env.execute_sql(f"""
+        INSERT INTO {sink}
+        SELECT
+            window_start,
+            window_end,
+            PULocationID,
+            COUNT(*) AS num_trips
+        FROM TABLE(
+            SESSION(TABLE {source}, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
+        )
+        GROUP BY window_start, window_end, PULocationID
+    """).wait()
+
+
+if __name__ == '__main__':
+    run()
