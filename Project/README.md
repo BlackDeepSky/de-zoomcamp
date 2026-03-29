@@ -5,6 +5,9 @@
 > **Course:** [Data Engineering Zoomcamp 2026](https://github.com/DataTalksClub/data-engineering-zoomcamp) by DataTalksClub
 > **Constraint:** 100% local stack — no cloud services required.
 
+## Dashboard Preview
+
+![Belarus IT Job Market Dashboard](docs/dashboard.png)
 ---
 
 ## Architecture
