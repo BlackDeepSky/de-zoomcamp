@@ -58,3 +58,8 @@ EOF
 logs/runs
 logs/*.log
 logs/queries
+# Metabase
+metabase_data/
+
+# Environment files
+.env

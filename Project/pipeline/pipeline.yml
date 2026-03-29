@@ -1,0 +1,3 @@
+name: jobs_pipeline
+schedule: "@daily"
+default_environment: default
