@@ -16,7 +16,7 @@ My solutions and notes for the [DataTalks.Club Data Engineering Zoomcamp](https:
 | [`workshop1`](./workshop1) | Ingestion with dlt | Building data ingestion pipelines using the `dlt` (data load tool) library |
 | [`hw6`](./hw6) | Batch Processing | Advanced Spark: joins, window functions, working with large datasets |
 | [`hw7`](./hw7) | Streaming | Real-time data processing with Apache Kafka and Spark Streaming |
-| [`project1`](./project1) | Midterm Project | End-to-end data pipeline project: ingestion → transformation → dashboard |
+| [`Project`](./Project) | Midterm Project(Analytics jobs market) | End-to-end data pipeline project: ingestion → transformation → dashboard |
 | [`project2`](./project2) | Capstone Project | Final end-to-end project combining all course topics |
 
 ---
