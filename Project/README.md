@@ -23,27 +23,27 @@
 │                      │  │  01_extract_hh.py  [BRONZE]    │  │   │
 │                      │  │  Python · requests · pandas    │  │   │
 │                      │  └───────────────┬────────────────┘  │   │
-│                      │                  │ raw_vacancies      │   │
+│                      │                  │ raw_vacancies     │   │
 │                      │  ┌───────────────▼────────────────┐  │   │
 │                      │  │  02_stg_vacancies.sql [SILVER] │  │   │
 │                      │  │  Cleaning · date parsing       │  │   │
 │                      │  └───────────┬──────────┬─────────┘  │   │
-│                      │              │          │             │   │
+│                      │              │          │            │   │
 │                      │  ┌───────────▼──┐  ┌───▼──────────┐  │   │
 │                      │  │  03_mart_    │  │  04_mart_    │  │   │
 │                      │  │  vacancies_  │  │  top_skills  │  │   │
 │                      │  │  stats [GOLD]│  │  .sql [GOLD] │  │   │
 │                      │  └───────────┬──┘  └───┬──────────┘  │   │
 │                      └─────────────┼──────────┼─────────────┘   │
-│                                    │          │                  │
+│                                    │          │                 │
 │                      ┌─────────────▼──────────▼─────────────┐   │
-│                      │         PostgreSQL (Docker)           │   │
-│                      └──────────────────┬────────────────────┘   │
-│                                         │                        │
-│                      ┌──────────────────▼────────────────────┐   │
-│                      │          Metabase (Docker)            │   │
-│                      │     Dashboard · Charts · Filters      │   │
-│                      └───────────────────────────────────────┘   │
+│                      │         PostgreSQL (Docker)          │   │
+│                      └──────────────────┬───────────────────┘   │
+│                                         │                       │
+│                      ┌──────────────────▼────────────────────┐  │
+│                      │          Metabase (Docker)            │  │
+│                      │     Dashboard · Charts · Filters      │  │
+│                      └───────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -63,19 +63,23 @@
 
 ## Pipeline Layers
 
-### 🥉 Bronze — `01_extract_hh.py`
-Hits the HH.ru API in two passes per vacancy: first a search query to get vacancy IDs, then a detail request per ID to extract `key_skills`. Collects up to 50 vacancies per role across 3 categories (Data Engineer, Data Analyst, Data Scientist) filtered to Belarus (`area=16`). Loads raw data into `public.raw_vacancies` via Bruin's `create+replace` strategy.
+### 🥉 Bronze — `extract_hh.py` (Bruin)
+Hits the HH.ru API in two passes per vacancy: search query to get IDs,
+then a detail request per ID to extract `key_skills`. Collects up to 50
+vacancies per role across 3 categories filtered to Belarus (`area=16`).
+Loads raw data into `public.raw_vacancies` via Bruin `create+replace`.
 
-Fields collected: `id`, `role_category`, `title`, `published_at`, `experience`, `employer`, `skills`, `url`
+### 🥈 Silver — `02_stg_vacancies.sql` (Bruin)
+Cleans raw data, parses ISO 8601 timestamps into `timestamptz` and `date`.
+Creates view `public.stg_vacancies` with `published_date` and `publish_day`.
 
-### 🥈 Silver — `02_stg_vacancies.sql`
-Cleans raw data and parses the ISO 8601 timestamp from the API into proper PostgreSQL types. Creates a view `public.stg_vacancies` with `published_date` (timestamptz) and `publish_day` (date) columns for downstream aggregation.
+### 🥇 Gold — dbt models
+Transformations are defined with dbt, sourced from `public.stg_vacancies`.
 
-### 🥇 Gold — `03_mart_vacancies_stats.sql`
-Aggregates vacancy counts grouped by `role_category`, `experience`, `publish_day`, `publish_week` and `publish_month`. Powers the vacancy dynamics chart in Metabase.
-
-### 🥇 Gold — `04_mart_top_skills.sql`
-Unpacks the comma-separated `skills` string using `STRING_TO_ARRAY` + `UNNEST`, counts mentions per skill per role, and ranks them with `ROW_NUMBER()`. Returns top-5 skills per profession.
+| Model | Description |
+|---|---|
+| `mart_vacancies_stats` | Vacancy counts grouped by role, experience, day/week/month. Partitioned by `publish_day`. |
+| `mart_top_skills` | Top-5 skills per profession via `STRING_TO_ARRAY` + `UNNEST` + `ROW_NUMBER()` |
 
 ---
 
@@ -117,23 +121,14 @@ bruin connections list  # verify pg_local appears
 ```
 
 ### 4. Run the pipeline
-
 ```bash
-# Validate all assets
-bruin validate pipeline/
+# Step 1 — Bronze + Silver via Bruin (run without venv)
+bruin run pipeline/ --workers 1
 
-# Full run
-bruin run pipeline/
-```
-
-Expected output:
-```
-PASS public.raw_vacancies
-PASS public.stg_vacancies
-PASS public.mart_vacancies_stats
-PASS public.mart_top_skills
-
-✓ Assets executed: 4 succeeded
+# Step 2 — Gold via dbt (run with venv activated)
+cd jobs_dbt
+source ../.venv/bin/activate
+dbt run
 ```
 
 ### 5. Open Metabase dashboard
