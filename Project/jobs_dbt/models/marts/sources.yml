@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: public
+    database: movies_db
+    schema: public
+    tables:
+      - name: stg_vacancies
+        description: "Silver layer — cleaned vacancies from HH.ru API"
