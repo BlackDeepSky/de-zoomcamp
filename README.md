@@ -17,7 +17,6 @@ My solutions and notes for the [DataTalks.Club Data Engineering Zoomcamp](https:
 | [`hw6`](./hw6) | Batch Processing | Advanced Spark: joins, window functions, working with large datasets |
 | [`hw7`](./hw7) | Streaming | Real-time data processing with Apache Kafka and Spark Streaming |
 | [`Project`](./Project) | Midterm Project(Analytics jobs market) | End-to-end data pipeline project: ingestion → transformation → dashboard |
-| [`project2`](./project2) | Capstone Project | Final end-to-end project combining all course topics |
 
 ---
 
